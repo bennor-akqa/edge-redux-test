@@ -10,29 +10,9 @@ import { Action, combineReducers } from "redux";
 import { createWrapper, HYDRATE } from "next-redux-wrapper";
 import logger from "redux-logger";
 
-// System model
-interface SystemData {
-  source: string;
+interface IPState {
+  origin: string;
 }
-
-interface SystemState {
-  data: SystemData | null;
-}
-
-const initialSystemState: SystemState = {
-  data: null,
-};
-
-// Subject page slice approach
-const systemSlice = createSlice({
-  name: "system",
-  initialState: initialSystemState,
-  reducers: {
-    systemLoaded(state, { payload }: PayloadAction<SystemState>) {
-      state.data = payload.data;
-    },
-  },
-});
 
 interface Pokemon {
   id: number;
@@ -40,18 +20,31 @@ interface Pokemon {
 }
 
 function isHydrateAction(action: Action): action is PayloadAction<any> {
-  return action.type === HYDRATE
+  return action.type === HYDRATE;
 }
+
+export const systemApi = createApi({
+  reducerPath: "systemApi",
+  baseQuery: fetchBaseQuery({ baseUrl: "https://httpbin.org" }),
+
+  endpoints: (builder) => ({
+    getIP: builder.query<IPState, void>({
+      query: () => `/ip`,
+    }),
+  }),
+  extractRehydrationInfo(action, { reducerPath }) {
+    if (isHydrateAction(action)) {
+      return action.payload[reducerPath];
+    }
+  },
+});
+
+export const { useGetIPQuery } = systemApi;
 
 // API approach
 export const pokemonApi = createApi({
   reducerPath: "pokemonApi",
   baseQuery: fetchBaseQuery({ baseUrl: "https://pokeapi.co/api/v2" }),
-  extractRehydrationInfo(action, { reducerPath }) {
-    if (isHydrateAction(action)) {
-      return action.payload[reducerPath]
-    }
-  },
   endpoints: (builder) => ({
     getPokemonByName: builder.query<Pokemon, string>({
       query: (name) => `/pokemon/${name}`,
@@ -61,33 +54,40 @@ export const pokemonApi = createApi({
       }),
     }),
   }),
+  extractRehydrationInfo(action, { reducerPath }) {
+    if (isHydrateAction(action)) {
+      return action.payload[reducerPath];
+    }
+  },
 });
 
 export const { useGetPokemonByNameQuery } = pokemonApi;
 
 // Store setup
 const reducers = {
-  [systemSlice.name]: systemSlice.reducer,
+  [systemApi.reducerPath]: systemApi.reducer,
   [pokemonApi.reducerPath]: pokemonApi.reducer,
 };
 
 const reducer = combineReducers(reducers);
 
-const makeStore = ({reduxWrapperMiddleware}: any) =>
+const makeStore = ({ reduxWrapperMiddleware }: any) =>
   configureStore({
     reducer,
     devTools: true,
     middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat([
-        process.browser ? logger : null,
-        pokemonApi.middleware,
-        reduxWrapperMiddleware
-      ]).filter(Boolean) as any,
+      getDefaultMiddleware()
+        .concat([
+          process.browser ? logger : null,
+          pokemonApi.middleware,
+          reduxWrapperMiddleware,
+        ])
+        .filter(Boolean) as any,
   });
 
 type AppStore = ReturnType<typeof makeStore>;
 export type AppState = ReturnType<AppStore["getState"]>;
-type AppThunk<ReturnType = void> = ThunkAction<
+export type AppThunk<ReturnType = void> = ThunkAction<
   ReturnType,
   AppState,
   unknown,
@@ -95,29 +95,3 @@ type AppThunk<ReturnType = void> = ThunkAction<
 >;
 
 export const wrapper = createWrapper<AppStore>(makeStore, { debug: true });
-
-// System thunk
-export const fetchSystem = (): AppThunk => async (dispatch) => {
-  const timeoutPromise = (timeout: number) =>
-    new Promise((resolve) => setTimeout(resolve, timeout));
-
-  await timeoutPromise(200);
-
-  dispatch(
-    systemSlice.actions.systemLoaded({
-      data: {
-        source: "GIAP",
-      },
-    })
-  );
-};
-
-// System selectors
-const systemSliceSelector = (state: AppState): SystemState => state?.system;
-
-const selectSystemData = createSelector(systemSliceSelector, (s) => s.data);
-
-export const selectSystemSource = createSelector(
-  selectSystemData,
-  (s) => s?.source
-);
