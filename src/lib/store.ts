@@ -6,21 +6,29 @@ import {
   ThunkAction,
 } from "@reduxjs/toolkit";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { Action, combineReducers } from "redux";
+import { Action, combineReducers, UnknownAction } from "redux";
 import { createWrapper, HYDRATE } from "next-redux-wrapper";
 import logger from "redux-logger";
 
-interface IPState {
+export interface IPState {
   origin: string;
 }
 
-interface Pokemon {
+export interface Pokemon {
   id: number;
   name: string;
 }
 
-function isHydrateAction(action: Action): action is PayloadAction<any> {
-  return action.type === HYDRATE;
+function extractRehydrationInfo(
+  action: UnknownAction,
+  { reducerPath }: { reducerPath: string }
+) {
+  if (action.type === HYDRATE) {
+    const { payload } = action as PayloadAction<any>;
+    // if (payload.app === 'init') delete payload.app;
+    // if (payload.page === 'init') delete payload.page;
+    return payload[reducerPath];
+  }
 }
 
 export const systemApi = createApi({
@@ -32,11 +40,7 @@ export const systemApi = createApi({
       query: () => `/ip`,
     }),
   }),
-  extractRehydrationInfo(action, { reducerPath }) {
-    if (isHydrateAction(action)) {
-      return action.payload[reducerPath];
-    }
-  },
+  extractRehydrationInfo,
 });
 
 export const { useGetIPQuery } = systemApi;
@@ -54,11 +58,7 @@ export const pokemonApi = createApi({
       }),
     }),
   }),
-  extractRehydrationInfo(action, { reducerPath }) {
-    if (isHydrateAction(action)) {
-      return action.payload[reducerPath];
-    }
-  },
+  extractRehydrationInfo,
 });
 
 export const { useGetPokemonByNameQuery } = pokemonApi;
@@ -79,6 +79,7 @@ const makeStore = ({ reduxWrapperMiddleware }: any) =>
       getDefaultMiddleware()
         .concat([
           process.browser ? logger : null,
+          systemApi.middleware,
           pokemonApi.middleware,
           reduxWrapperMiddleware,
         ])
