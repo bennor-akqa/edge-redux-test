@@ -7,7 +7,7 @@ import {
 } from "@reduxjs/toolkit";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Action, combineReducers } from "redux";
-import { createWrapper } from "next-redux-wrapper";
+import { createWrapper, HYDRATE } from "next-redux-wrapper";
 import logger from "redux-logger";
 
 // System model
@@ -39,10 +39,19 @@ interface Pokemon {
   name: string;
 }
 
+function isHydrateAction(action: Action): action is PayloadAction<any> {
+  return action.type === HYDRATE
+}
+
 // API approach
 export const pokemonApi = createApi({
   reducerPath: "pokemonApi",
   baseQuery: fetchBaseQuery({ baseUrl: "https://pokeapi.co/api/v2" }),
+  extractRehydrationInfo(action, { reducerPath }) {
+    if (isHydrateAction(action)) {
+      return action.payload[reducerPath]
+    }
+  },
   endpoints: (builder) => ({
     getPokemonByName: builder.query<Pokemon, string>({
       query: (name) => `/pokemon/${name}`,
