@@ -7,7 +7,7 @@ import {
 } from "@reduxjs/toolkit";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Action, combineReducers } from "redux";
-import { Context, createWrapper } from "next-redux-wrapper";
+import { createWrapper } from "next-redux-wrapper";
 import logger from "redux-logger";
 
 // System model
@@ -35,7 +35,7 @@ const systemSlice = createSlice({
 });
 
 interface Pokemon {
-  id: number
+  id: number;
   name: string;
 }
 
@@ -46,10 +46,10 @@ export const pokemonApi = createApi({
   endpoints: (builder) => ({
     getPokemonByName: builder.query<Pokemon, string>({
       query: (name) => `/pokemon/${name}`,
-      transformResponse: ({id, name}: any) => ({
+      transformResponse: ({ id, name }: any) => ({
         id,
-        name
-      })
+        name,
+      }),
     }),
   }),
 });
@@ -64,16 +64,16 @@ const reducers = {
 
 const reducer = combineReducers(reducers);
 
-const makeStore = () =>
+const makeStore = ({reduxWrapperMiddleware}: any) =>
   configureStore({
     reducer,
     devTools: true,
     middleware: (getDefaultMiddleware) =>
-      [
-        ...getDefaultMiddleware(),
+    getDefaultMiddleware().concat([
         process.browser ? logger : null,
         pokemonApi.middleware,
-      ].filter(Boolean) as any,
+        reduxWrapperMiddleware
+      ]).filter(Boolean) as any,
   });
 
 type AppStore = ReturnType<typeof makeStore>;
