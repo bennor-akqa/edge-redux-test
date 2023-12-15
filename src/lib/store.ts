@@ -7,7 +7,7 @@ import {
 } from "@reduxjs/toolkit";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Action, combineReducers } from "redux";
-import { createWrapper, MakeStore } from "next-redux-wrapper";
+import { Context, createWrapper } from "next-redux-wrapper";
 import logger from "redux-logger";
 
 // System model
@@ -64,7 +64,7 @@ const reducers = {
 
 const reducer = combineReducers(reducers);
 
-const makeStore = ({ reduxWrapperMiddleware }: any) =>
+const makeStore = () =>
   configureStore({
     reducer,
     devTools: true,
@@ -73,7 +73,6 @@ const makeStore = ({ reduxWrapperMiddleware }: any) =>
         ...getDefaultMiddleware(),
         process.browser ? logger : null,
         pokemonApi.middleware,
-        reduxWrapperMiddleware,
       ].filter(Boolean) as any,
   });
 

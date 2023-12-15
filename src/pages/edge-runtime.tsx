@@ -19,10 +19,10 @@ export const getServerSideProps = wrapper.getServerSideProps(store => async cont
     const pokemon = 'pikachu';
     if (typeof pokemon === 'string') {
         console.log('DISPATCH');
-        store.dispatch(pokemonApi.endpoints.getPokemonByName.initiate(pokemon));
+        store.dispatch<any>(pokemonApi.endpoints.getPokemonByName.initiate(pokemon));
     }
 
-    await Promise.all(store.dispatch(pokemonApi.util.getRunningQueriesThunk()));
+    await Promise.all(store.dispatch<any>(pokemonApi.util.getRunningQueriesThunk()));
 
     console.log('SERVER STATE', store.getState().pokemonApi);
 
