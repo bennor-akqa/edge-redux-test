@@ -65,12 +65,16 @@ export interface Country {
   phone: string;
 }
 
-export const countriesApi = createApi({
+export const countriesBaseApi = createApi({
   reducerPath: "countriesApi",
   baseQuery: graphqlRequestBaseQuery({
     baseUrl: "https://countries.trevorblades.com/graphql",
   }),
   extractRehydrationInfo,
+  endpoints() { return {}}
+})
+
+export const countriesApi = countriesBaseApi.injectEndpoints({
   endpoints: (builder) => ({
     getCountry: builder.query<Country | undefined, string>({
       query: (code) => ({
@@ -102,7 +106,7 @@ export const { useGetCountryQuery } = countriesApi;
 const reducers = {
   [systemApi.reducerPath]: systemApi.reducer,
   [pokemonApi.reducerPath]: pokemonApi.reducer,
-  [countriesApi.reducerPath]: countriesApi.reducer,
+  [countriesBaseApi.reducerPath]: countriesApi.reducer,
 };
 
 const reducer = combineReducers(reducers);
@@ -117,7 +121,7 @@ const makeStore = ({ reduxWrapperMiddleware }: any) =>
           process.browser ? logger : null,
           systemApi.middleware,
           pokemonApi.middleware,
-          countriesApi.middleware,
+          countriesBaseApi.middleware,
           reduxWrapperMiddleware,
         ])
         .filter(Boolean) as any,
