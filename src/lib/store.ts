@@ -1,5 +1,5 @@
 import { configureStore, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery, setupListeners } from "@reduxjs/toolkit/query/react";
 import { Action, combineReducers, UnknownAction } from "redux";
 import { createWrapper, HYDRATE } from "next-redux-wrapper";
 import logger from "redux-logger";
@@ -108,11 +108,11 @@ const reducers = {
 const reducer = combineReducers(reducers);
 
 const makeStore = ({ reduxWrapperMiddleware }: any) =>
-  configureStore({
-    reducer,
-    devTools: true,
-    middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware()
+  {
+    const store = configureStore({
+      reducer,
+      devTools: true,
+      middleware: (getDefaultMiddleware) => getDefaultMiddleware()
         .concat([
           process.browser ? logger : null,
           systemApi.middleware,
@@ -121,7 +121,10 @@ const makeStore = ({ reduxWrapperMiddleware }: any) =>
           reduxWrapperMiddleware,
         ])
         .filter(Boolean) as any,
-  });
+    });
+    setupListeners(store.dispatch)
+    return store
+  };
 
 type AppStore = ReturnType<typeof makeStore>;
 export type AppState = ReturnType<AppStore["getState"]>;
