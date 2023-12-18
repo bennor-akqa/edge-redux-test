@@ -5,6 +5,7 @@ import {
   pokemonApi,
   countriesApi,
   useAppStore,
+  countriesBaseApi,
 } from "@/lib/store";
 import { InferGetServerSidePropsType } from "next";
 
@@ -47,7 +48,7 @@ export const getServerSideProps = wrapper.getServerSideProps(
 
     await Promise.all([
       ...store.dispatch<any>(pokemonApi.util.getRunningQueriesThunk()),
-      ...store.dispatch<any>(countriesApi.util.getRunningQueriesThunk()),
+      ...store.dispatch<any>(countriesBaseApi.util.getRunningQueriesThunk()),
     ]);
 
     console.log("SERVER STATE", JSON.stringify(store.getState().countriesApi, null, 2));
