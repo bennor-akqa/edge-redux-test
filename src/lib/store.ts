@@ -1,6 +1,6 @@
-import { configureStore, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
+import { configureStore, PayloadAction, ThunkAction, UnknownAction } from "@reduxjs/toolkit";
 import { createApi, fetchBaseQuery, setupListeners } from "@reduxjs/toolkit/query/react";
-import { Action, AnyAction, combineReducers } from "redux";
+import { Action, combineReducers } from "redux";
 import { createWrapper, HYDRATE } from "next-redux-wrapper";
 import logger from "redux-logger";
 import graphqlRequestBaseQuery from "./graphql";
@@ -16,11 +16,11 @@ export interface Pokemon {
 }
 
 function extractRehydrationInfo(
-  action: AnyAction,
+  action: UnknownAction,
   { reducerPath }: { reducerPath: string }
 ) {
   if (action.type === HYDRATE) {
-    const { payload } = action as PayloadAction<any>;
+    const { payload } = action as PayloadAction<Record<string, never>>;
     // if (payload.app === 'init') delete payload.app;
     // if (payload.page === 'init') delete payload.page;
     return payload[reducerPath];
